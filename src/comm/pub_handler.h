@@ -37,6 +37,7 @@
 
 #include "livox_lidar_api.h"
 #include "comm/comm.h"
+#include "comm/frame_timer.h"
 
 namespace livox_ros {
 
@@ -75,7 +76,6 @@ class PubHandler {
  public:
   using PointCloudsCallback = std::function<void(PointFrame*, void *)>;
   using ImuDataCallback = std::function<void(ImuData*, void*)>;
-  using TimePoint = std::chrono::high_resolution_clock::time_point;
 
   PubHandler() {}
 
@@ -121,7 +121,9 @@ class PubHandler {
   uint64_t publish_interval_ = 100000000; //100 ms
   uint64_t publish_interval_tolerance_ = 100000000; //100 ms
   uint64_t publish_interval_ms_ = 100; //100 ms
-  TimePoint last_pub_time_;
+  // Frame timer for lidars that are not time-synced. Monotonic, so a system
+  // clock jump does not turn every packet into a frame.
+  FrameTimer frame_timer_{publish_interval_};
 
   std::map<uint32_t, std::unique_ptr<LidarPubHandler>> lidar_process_handlers_;
   std::map<uint32_t, std::vector<PointXyzlt>> points_;

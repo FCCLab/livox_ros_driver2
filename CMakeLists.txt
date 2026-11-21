@@ -326,6 +326,11 @@ else(ROS_EDITION STREQUAL "ROS2")
     # uncomment the line when this package is not in a git repo
     #set(ament_cmake_cpplint_FOUND TRUE)
     ament_lint_auto_find_test_dependencies()
+
+    # Header-only unit test for the unsynced-lidar frame timer.
+    add_executable(test_frame_timer test/test_frame_timer.cpp)
+    target_include_directories(test_frame_timer PRIVATE src)
+    add_test(NAME test_frame_timer COMMAND test_frame_timer)
   endif()
 
   ament_auto_package(INSTALL_TO_SHARE

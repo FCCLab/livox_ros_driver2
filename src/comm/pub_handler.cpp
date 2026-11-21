@@ -66,6 +66,7 @@ void PubHandler::SetPointCloudConfig(const double publish_freq) {
   publish_interval_ = (kNsPerSecond / (publish_freq * 10)) * 10;
   publish_interval_tolerance_ = publish_interval_ - kNsTolerantFrameTimeDeviation;
   publish_interval_ms_ = publish_interval_ / kRatioOfMsToNs;
+  frame_timer_.SetInterval(publish_interval_);
   if (!point_process_thread_) {
     point_process_thread_ = std::make_shared<std::thread>(&PubHandler::RawDataProcess, this);
   }
@@ -193,18 +194,9 @@ void PubHandler::CheckTimer(uint32_t id) {
       frame_.lidar_num = 0;
     }
   } else { // Disable time synchronization
-    auto now_time = std::chrono::high_resolution_clock::now();
-    //First Set
-    static bool first = true;
-    if (first) {
-      last_pub_time_ = now_time;
-      first = false;
+    if (!frame_timer_.Tick()) {
       return;
     }
-    if (now_time - last_pub_time_ < std::chrono::nanoseconds(publish_interval_)) {
-      return;
-    }
-    last_pub_time_ += std::chrono::nanoseconds(publish_interval_);
     for (auto &process_handler : lidar_process_handlers_) {
       frame_.base_time[frame_.lidar_num] = process_handler.second->GetLidarBaseTime();
       uint32_t handle = process_handler.first;
